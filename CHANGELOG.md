@@ -1,11 +1,16 @@
-v0.0.2:
+Amazon S3 Extended Über Edition
+==========
 
+v0.0.2:
+==========
 Main:
 - Added resize on upload for PNG, JPG, JPEG, GIF filetypes.
   You can enable this by setting the downSize property to "Yes".
 
 - Added sanitize file on upload. (eg. "Foo Bar.PNG" => "foo-bar.png")
   You can enable this by setting the sanitizeFile property to "Yes".
+
+- **downSize property now works as intended.**
 
 - Added downSizeWidth property (in pixels). (Default: "300")
 - Added downSizeHeight property (in pixels). (Default: "300")
@@ -18,13 +23,13 @@ Lexicon:
 - Added English translation for downSizeQuality description.
 - Added Englihs translation for sanitizeFiles description.
 - Added English translation for notImplemented error.
--------------------------------------------------------------------------------------------
+
 
 v0.0.1:
-
+==========
 Main:
 - Added basic Amazon S3 source type
-- Added downSize property. (Default: "No")
+~~- Added downSize property.~~ (Default: "No") Not working
 
 Lexicon:
 - Added English translation for package name.

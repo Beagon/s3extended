@@ -8,3 +8,7 @@ $_lang['s3extended.thumbnailType_desc'] = 'The image type to render thumbnails a
 $_lang['s3extended.thumbnailQuality_desc'] = 'The quality of the rendered thumbnails, in a scale from 0-100.';
 $_lang['s3extended.skipFiles_desc'] = 'A comma-seperated list. S3 Extended will skip over and hide files and folders that match any of these.';
 $_lang['s3extended.downSize_desc'] = 'A yes or no check. If yes S3 Extended will downsize images before upload.';
+$_lang['s3extended.downSizeWidth_desc'] = 'The width that will be used for the downsizing of images when downSize is set on Yes.';
+$_lang['s3extended.downSizeHeight_desc'] = 'The height that will be used for the downsizing of images when downSize is set on Yes.';
+$_lang['s3extended.downSizeQuality_desc'] = 'The quality percentage of the downsized image, in a scale from 0-100 when downSize is set on Yes.';
+$_lang['s3extended.sanitizeFiles_desc'] = 'A yes or no check. If yes your file name will be sanitized on upload. eg. "My Vacation Photo 1.PNG" will be called "my-vacation-photo-1.png"';

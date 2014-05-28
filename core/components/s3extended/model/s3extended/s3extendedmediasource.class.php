@@ -16,6 +16,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
     public $driver;
     /** @var string $bucket */
     public $bucket;
+
     /**
      * Override the constructor to always force S3 sources to not be streams.
      *
@@ -61,21 +62,16 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      * @return string
      */
     public function getTypeName() {
-         //$this->xpdo->lexicon->load('s3extended');
-        //$this->xpdo->lexicon->load('s3extended');
         return $this->xpdo->lexicon('s3extended.name');
-        // return "Amazon S3 Extended Über Edition.";
     }
+
     /**
      * Get the description of this source type
      * @return string
      */
     public function getTypeDescription() {
-        // $this->xpdo->lexicon->load('s3extended:default');
-         return $this->xpdo->lexicon('s3extended.description');
-        //return "Amazon S3 Extended Über Edition.";
+        return $this->xpdo->lexicon('s3extended.description');
     }
-
 
     /**
      * Gets the AmazonS3 class instance
@@ -581,23 +577,27 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      */
     public function uploadObjectsToContainer($container,array $objects = array()) {
         if ($container == '/' || $container == '.') $container = '';
-        $downSize = $this->getOption('downSize',$this->properties,'No');
-        $imageExtensions = $this->getOption('imageExtensions',$this->properties,'jpg,jpeg,png,gif');
-        $imageExtensions = explode(',',$imageExtensions);
-        $allowedFileTypes = explode(',',$this->xpdo->getOption('upload_files',null,''));
-        $allowedFileTypes = array_merge(explode(',',$this->xpdo->getOption('upload_images')),explode(',',$this->xpdo->getOption('upload_media')),explode(',',$this->xpdo->getOption('upload_flash')),$allowedFileTypes);
+        $downSize = $this->getOption('downSize', $this->properties, 'No');
+        $downSizeWidth = $this->getOption('downSizeWidth', $this->properties, '300');
+        $downSizeHeight = $this->getOption('downSizeHeight', $this->properties, '300');
+        $downSizeQuality = $this->getOption('downSizeQuality', $this->properties, '90');
+        $sanitizeFiles = $this->getOption('sanitizeFiles',$this->properties, 'Yes');
+        $imageExtensions = $this->getOption('imageExtensions', $this->properties, 'jpg,jpeg,png,gif');
+        $imageExtensions = explode(',', $imageExtensions);
+        $allowedFileTypes = explode(',', $this->xpdo->getOption('upload_files', null, ''));
+        $allowedFileTypes = array_merge(explode(',', $this->xpdo->getOption('upload_images')), explode(',', $this->xpdo->getOption('upload_media')), explode(',', $this->xpdo->getOption('upload_flash')), $allowedFileTypes);
         $allowedFileTypes = array_unique($allowedFileTypes);
         $maxFileSize = $this->xpdo->getOption('upload_maxsize',null,1048576);
-
+        $this->xpdo->lexicon->load('s3extended:errors');
         /* loop through each file and upload */
         foreach ($objects as $file) {
             if ($file['error'] != 0) continue;
             if (empty($file['name'])) continue;
-            $ext = @pathinfo($file['name'],PATHINFO_EXTENSION);
+            $ext = @pathinfo($file['name'], PATHINFO_EXTENSION);
             $ext = strtolower($ext);
 
             if (empty($ext) || !in_array($ext,$allowedFileTypes)) {
-                $this->addError('path',$this->xpdo->lexicon('file_err_ext_not_allowed',array(
+                $this->addError('path',$this->xpdo->lexicon('file_err_ext_not_allowed', array(
                     'ext' => $ext,
                 )));
                 continue;
@@ -605,20 +605,71 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             $size = @filesize($file['tmp_name']);
 
             if ($size > $maxFileSize) {
-                $this->addError('path',$this->xpdo->lexicon('file_err_too_large',array(
+                $this->addError('path',$this->xpdo->lexicon('file_err_too_large', array(
                     'size' => $size,
                     'allowed' => $maxFileSize,
                 )));
                 continue;
             }
 
-            $newPath = $container.$file['name'];
+            if ($sanitizeFiles == "Yes") {
+                $newPath =  strtolower(str_replace(" ", "-", $container . $file['name']));
+            }else{
+                $newPath =  $container . $file['name'];
+            }
+
             if ($downSize == "Yes" && in_array($ext, $imageExtensions)) {
-            $this->addError('path', $downSize);
+                $assetsPath = MODX_ASSETS_PATH . "components/s3exended/tmp";
+                $oldmask = umask(0);
+                $filename = $assetsPath . "/" . uniqid() . "." . $ext;
+                $cacheName = $assetsPath . "/rs/" . uniqid() . "." . $ext;
+
+                if (!file_exists($assetsPath . "/rs")) {
+                    $oldmask = umask(0);
+                    mkdir($assetsPath . "/rs", 0777, true);
+                    umask($oldmask);
+                }
+
+                copy($file['tmp_name'], $filename);
+                
+                // Get new sizes
+                list($width, $height) = getimagesize($filename);
+
+                // Load
+                $thumb = imagecreatetruecolor($downSizeWidth, $downSizeHeight);
+                switch ($ext) {
+                    case "gif":
+                        $source = imagecreatefromgif($filename);
+                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagegif($thumb, $cacheName, $downSizeQuality);
+                        $file['tmp_name'] = $cacheName;
+                        break;
+                    case "jpeg":
+                        $source = imagecreatefromjpeg($filename);
+                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagejpeg($thumb, $cacheName, $downSizeQuality);
+                        $file['tmp_name'] = $cacheName;
+                        break;
+                    case "jpg":
+                        $source = imagecreatefromjpeg($filename);
+                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagejpeg($thumb, $cacheName, $downSizeQuality);
+                        $file['tmp_name'] = $cacheName;
+                        break;
+                    case "png":
+                        $source = imagecreatefrompng($filename);
+                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagepng($thumb, $cacheName, $downSizeQuality);
+                        $file['tmp_name'] = $cacheName;
+                        break;
+                    default:
+                        $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
+                        break;
+                }
             }
 
             $contentType = $this->getContentType($ext);
-            $uploaded = $this->driver->create_object($this->bucket,$newPath,array(
+            $uploaded = $this->driver->create_object($this->bucket, $newPath, array(
                 'fileUpload' => $file['tmp_name'],
                 'acl' => AmazonS3::ACL_PUBLIC,
                 'length' => $size,
@@ -626,18 +677,27 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             ));
 
             if (!$uploaded) {
-                $this->addError('path',$this->xpdo->lexicon('file_err_upload'));
+                $this->addError('path', $this->xpdo->lexicon('file_err_upload'));
+            }else{
+                if ($downSize == "Yes" && in_array($ext, $imageExtensions)) {
+                    if (file_exists($filename)) {
+                        unlink($filename);
+                    }
+                    if (file_exists($cacheName)) {
+                        unlink($cacheName);
+                    }
+                }
             }
         }
 
         /* invoke event */
-        $this->xpdo->invokeEvent('OnFileManagerUpload',array(
+        $this->xpdo->invokeEvent('OnFileManagerUpload', array(
             'files' => &$objects,
             'directory' => $container,
             'source' => &$this,
         ));
 
-        $this->xpdo->logManagerAction('file_upload','',$container);
+        $this->xpdo->logManagerAction('file_upload', '', $container);
 
         return !$this->hasErrors();
     }
@@ -972,12 +1032,44 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'value' => '.svn,.git,_notes,nbproject,.idea,.DS_Store',
                 'lexicon' => 's3extended:properties',
             ),
+            'sanitizeFiles' => array(
+                'name' => 'sanitizeFiles',
+                'desc' => 's3extended.sanitizeFiles_desc',
+                'type' => 'yesno',
+                'options' => '',
+                'value' => 'Yes',
+                'lexicon' => 's3extended:properties',
+            ),
             'downSize' => array(
                 'name' => 'downSize',
                 'desc' => 's3extended.downSize_desc',
                 'type' => 'yesno',
                 'options' => '',
                 'value' => 'No',
+                'lexicon' => 's3extended:properties',
+            ),
+            'downSizeWidth' => array(
+                'name' => 'downSizeWidth',
+                'desc' => 's3extended.downSizeWidth_desc',
+                'type' => 'textfield',
+                'options' => '',
+                'value' => 300,
+                'lexicon' => 's3extended:properties',
+            ),
+            'downSizeHeight' => array(
+                'name' => 'downSizeHeight',
+                'desc' => 's3extended.downSizeHeight_desc',
+                'type' => 'textfield',
+                'options' => '',
+                'value' => 300,
+                'lexicon' => 's3extended:properties',
+            ),
+            'downSizeQuality' => array(
+                'name' => 'downSizeQuality',
+                'desc' => 's3extended.downSizeQuality_desc',
+                'type' => 'textfield',
+                'options' => '',
+                'value' => 90,
                 'lexicon' => 's3extended:properties',
             ),
         );
@@ -1048,7 +1140,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
         $properties = $this->getPropertyList();
         $objectUrl = $properties['url'].$objectPath;
         $contents = @file_get_contents($objectUrl);
-
         $imageExtensions = $this->getOption('imageExtensions',$this->properties,'jpg,jpeg,png,gif');
         $imageExtensions = explode(',',$imageExtensions);
         $fileExtension = pathinfo($objectPath,PATHINFO_EXTENSION);

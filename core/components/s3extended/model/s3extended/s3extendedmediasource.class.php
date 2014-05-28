@@ -581,7 +581,9 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
         $downSizeWidth = $this->getOption('downSizeWidth', $this->properties, '300');
         $downSizeHeight = $this->getOption('downSizeHeight', $this->properties, '300');
         $downSizeQuality = $this->getOption('downSizeQuality', $this->properties, '90');
-        $sanitizeFiles = $this->getOption('sanitizeFiles',$this->properties, 'Yes');
+        $sanitizeFiles = $this->getOption('sanitizeFiles', $this->properties, 'Yes');
+        $keepRatio = $this->getOption('keepRatio', $this->properties, 'Yes');
+
         $imageExtensions = $this->getOption('imageExtensions', $this->properties, 'jpg,jpeg,png,gif');
         $imageExtensions = explode(',', $imageExtensions);
         $allowedFileTypes = explode(',', $this->xpdo->getOption('upload_files', null, ''));
@@ -634,37 +636,45 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 
                 // Get new sizes
                 list($width, $height) = getimagesize($filename);
+                if($width => $downSizeWidth) {
+                    if ($keepRatio == "Yes") {
+                        $onePercent = $width / 100;
+                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $height . "/100 =" . $onePercent);
+                        $downSizePercentage = floatval(($downSizeWidth / $onePercent)) / 100;
+                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, "(" . $downSizeHeight . "/" . $onePercent . ") = " . ($downSizeHeight / $onePercent) . "/100 =" . $downSizePercentage);
+                        $downSizeHeight = $height * $downSizePercentage;
+                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $width . "*" . $downSizePercentage . "=" . $downSizeWidth2);
+                    }
 
-                // Load
-                $thumb = imagecreatetruecolor($downSizeWidth, $downSizeHeight);
-                switch ($ext) {
-                    case "gif":
-                        $source = imagecreatefromgif($filename);
-                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                        imagegif($thumb, $cacheName, $downSizeQuality);
-                        $file['tmp_name'] = $cacheName;
-                        break;
-                    case "jpeg":
-                        $source = imagecreatefromjpeg($filename);
-                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                        imagejpeg($thumb, $cacheName, $downSizeQuality);
-                        $file['tmp_name'] = $cacheName;
-                        break;
-                    case "jpg":
-                        $source = imagecreatefromjpeg($filename);
-                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                        imagejpeg($thumb, $cacheName, $downSizeQuality);
-                        $file['tmp_name'] = $cacheName;
-                        break;
-                    case "png":
-                        $source = imagecreatefrompng($filename);
-                        imagecopyresized($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                        imagepng($thumb, $cacheName, $downSizeQuality);
-                        $file['tmp_name'] = $cacheName;
-                        break;
-                    default:
-                        $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
-                        break;
+                    // Load
+                    $thumb = imagecreatetruecolor($downSizeWidth, $downSizeHeight);
+                    switch ($ext) {
+                        case "gif":
+                            $source = imagecreatefromgif($filename);
+                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                            imagegif($thumb, $cacheName, $downSizeQuality);
+                            break;
+                        case "jpeg":
+                            $source = imagecreatefromjpeg($filename);
+                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                            imagejpeg($thumb, $cacheName, $downSizeQuality);
+                            break;
+                        case "jpg":
+                            $source = imagecreatefromjpeg($filename);
+                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                            imagejpeg($thumb, $cacheName, $downSizeQuality);
+                            break;
+                        case "png":
+                            $source = imagecreatefrompng($filename);
+                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                            imagepng($thumb, $cacheName, $downSizeQuality);
+                            break;
+                        default:
+                            $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
+                            break;
+                    }
+                    $file['tmp_name'] = $cacheName;
+                    $size = @filesize($file['tmp_name']);
                 }
             }
 
@@ -1046,6 +1056,14 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'type' => 'yesno',
                 'options' => '',
                 'value' => 'No',
+                'lexicon' => 's3extended:properties',
+            ),
+            'keepRatio' => array(
+                'name' => 'keepRatio',
+                'desc' => 's3extended.keepRatio_desc',
+                'type' => 'yesno',
+                'options' => '',
+                'value' => 'Yes',
                 'lexicon' => 's3extended:properties',
             ),
             'downSizeWidth' => array(

@@ -1,5 +1,15 @@
 Amazon S3 Extended Über Edition
 ==========
+v0.0.3:
+==========
+Main:
+- Added keep image ratio.
+  You can enable this by setting the keepRatio property to "Yes".
+- Added keepRatio property. (Default: "Yes")
+
+Lexicon:
+- Added English translation for keepRatio description.
+
 
 v0.0.2:
 ==========

@@ -29,7 +29,7 @@ v0.0.1:
 ==========
 Main:
 - Added basic Amazon S3 source type
-~~- Added downSize property.~~ (Default: "No") Not working
+- ~~Added downSize property.~~ (Default: "No") Not working
 
 Lexicon:
 - Added English translation for package name.

@@ -1,9 +1,24 @@
 <?php
+//////////////////////////////////////////////////////////////
+///  S3 Extended by Robin Rijkeboer <robin@qaraqter.nl>     //
+//   available at https://github.com/Qaraqter/s3extended   ///
+//////////////////////////////////////////////////////////////
+///                                                         //
+// s3extendedmediasource.class.php - media source type      //
+//                                                         ///
+//////////////////////////////////////////////////////////////
+
 /**
  * @package s3extended
  * @subpackage sources
  */
 require_once MODX_CORE_PATH . 'model/modx/sources/modmediasource.class.php';
+ob_start();
+if (!include_once(dirname(__FILE__).'/s3extended.functions.php')) {
+    ob_end_flush();
+    die('failed to include_once("'.realpath(dirname(__FILE__).'/s3extended.functions.php').'")');
+}
+ob_end_clean();
 /**
  * Implements an Amazon S3-based media source, allowing basic manipulation, uploading and URL-retrieval of resources
  * in a specified S3 bucket.
@@ -369,30 +384,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
                     if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
 
-                    /* generate thumb/image URLs */
-                    $thumbQuery = http_build_query(array(
-                        'src' => $object,
-                        'w' => $thumbWidth,
-                        'h' => $thumbHeight,
-                        'f' => $thumbnailType,
-                        'q' => $thumbnailQuality,
-                        'HTTP_MODAUTH' => $modAuth,
-                        'wctx' => $this->ctx->get('key'),
-                        'source' => $this->get('id'),
-                    ));
-                    $imageQuery = http_build_query(array(
-                        'src' => $object,
-                        'w' => $imageWidth,
-                        'h' => $imageHeight,
-                        'HTTP_MODAUTH' => $modAuth,
-                        'f' => $thumbnailType,
-                        'q' => $thumbnailQuality,
-                        'wctx' => $this->ctx->get('key'),
-                        'source' => $this->get('id'),
-                    ));
-                    $fileArray['thumb'] = $this->ctx->getOption('connectors_url', MODX_CONNECTORS_URL).'system/phpthumb.php?'.urldecode($thumbQuery);
-                    $fileArray['image'] = $this->ctx->getOption('connectors_url', MODX_CONNECTORS_URL).'system/phpthumb.php?'.urldecode($imageQuery);
-
+                    $fileArray['thumb'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality);
+                    $fileArray['image'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality);
                 } else {
                     $fileArray['thumb'] = $this->ctx->getOption('manager_url', MODX_MANAGER_URL).'templates/default/images/restyle/nopreview.jpg';
                     $fileArray['thumbWidth'] = $this->ctx->getOption('filemanager_thumb_width', 80);
@@ -621,14 +614,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             }
 
             if ($downSize == "Yes" && in_array($ext, $imageExtensions)) {
-                $assetsPath = MODX_ASSETS_PATH . "components/s3exended/tmp";
-                $oldmask = umask(0);
+                $assetsPath = MODX_ASSETS_PATH . "components/s3extended/tmp";
                 $filename = $assetsPath . "/" . uniqid() . "." . $ext;
-                $cacheName = $assetsPath . "/rs/" . uniqid() . "." . $ext;
+                $cacheName = $assetsPath . "/" . uniqid() . "." . $ext;
 
-                if (!file_exists($assetsPath . "/rs")) {
+                if (!file_exists($assetsPath)) {
                     $oldmask = umask(0);
-                    mkdir($assetsPath . "/rs", 0777, true);
+                    mkdir($assetsPath, 0777, true);
                     umask($oldmask);
                 }
 
@@ -639,11 +631,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 if($width >= $downSizeWidth) {
                     if ($keepRatio == "Yes") {
                         $onePercent = $width / 100;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $height . "/100 =" . $onePercent);
                         $downSizePercentage = floatval(($downSizeWidth / $onePercent)) / 100;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, "(" . $downSizeHeight . "/" . $onePercent . ") = " . ($downSizeHeight / $onePercent) . "/100 =" . $downSizePercentage);
                         $downSizeHeight = $height * $downSizePercentage;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $width . "*" . $downSizePercentage . "=" . $downSizeWidth2);
                     }
 
                     // Load
@@ -1140,6 +1129,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      * @return boolean True if a binary file.
      */
     public function isBinary($file, $isContent = false) {
+        $file = str_replace(' ','%20', $file);
         if(!$isContent) {
             $file = file_get_contents($file, null, null, null, 512);
         }

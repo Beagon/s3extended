@@ -1,4 +1,12 @@
 <?php
+//////////////////////////////////////////////////////////////
+///  S3 Extended by Robin Rijkeboer <robin@qaraqter.nl>     //
+//   available at https://github.com/Qaraqter/s3extended   ///
+//////////////////////////////////////////////////////////////
+///                                                         //
+//       properties.inc.php - properties lexicon            //
+//                                                         ///
+//////////////////////////////////////////////////////////////
 $_lang['s3extended.url_desc'] = 'The URL of the Amazon S3 instance.';
 $_lang['s3extended.bucket_desc'] = 'The S3 Bucket to load your data from.';
 $_lang['s3extended.key_desc'] = 'The Amazon key for authentication to the bucket.';

@@ -1,4 +1,13 @@
 <?php
+//////////////////////////////////////////////////////////////
+///  S3 Extended by Robin Rijkeboer <robin@qaraqter.nl>     //
+//   available at https://github.com/Qaraqter/s3extended   ///
+//////////////////////////////////////////////////////////////
+///                                                         //
+// s3extendedmediasource.class.php - media source type      //
+//                                                         ///
+//////////////////////////////////////////////////////////////
+
 /**
  * @package s3extended
  * @subpackage sources

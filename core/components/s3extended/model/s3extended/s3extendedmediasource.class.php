@@ -636,7 +636,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 
                 // Get new sizes
                 list($width, $height) = getimagesize($filename);
-                if($width => $downSizeWidth) {
+                if($width >= $downSizeWidth) {
                     if ($keepRatio == "Yes") {
                         $onePercent = $width / 100;
                         //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $height . "/100 =" . $onePercent);

@@ -637,7 +637,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
 
             if ($downSize == "Yes" && in_array($ext, $imageExtensions)) {
                 $assetsPath = MODX_ASSETS_PATH . "components/s3exended/tmp";
-                $oldmask = umask(0);
                 $filename = $assetsPath . "/" . uniqid() . "." . $ext;
                 $cacheName = $assetsPath . "/rs/" . uniqid() . "." . $ext;
 
@@ -654,11 +653,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 if($width >= $downSizeWidth) {
                     if ($keepRatio == "Yes") {
                         $onePercent = $width / 100;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $height . "/100 =" . $onePercent);
                         $downSizePercentage = floatval(($downSizeWidth / $onePercent)) / 100;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, "(" . $downSizeHeight . "/" . $onePercent . ") = " . ($downSizeHeight / $onePercent) . "/100 =" . $downSizePercentage);
                         $downSizeHeight = $height * $downSizePercentage;
-                        //$this->xpdo->log(modX::LOG_LEVEL_ERROR, $width . "*" . $downSizePercentage . "=" . $downSizeWidth2);
                     }
 
                     // Load

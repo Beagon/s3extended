@@ -384,30 +384,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
                     if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
 
-                    /* generate thumb/image URLs */
-                    $thumbQuery = http_build_query(array(
-                        'src' => $object,
-                        'w' => $thumbWidth,
-                        'h' => $thumbHeight,
-                        'f' => $thumbnailType,
-                        'q' => $thumbnailQuality,
-                        'HTTP_MODAUTH' => $modAuth,
-                        'wctx' => $this->ctx->get('key'),
-                        'source' => $this->get('id'),
-                    ));
-                    $imageQuery = http_build_query(array(
-                        'src' => $object,
-                        'w' => $imageWidth,
-                        'h' => $imageHeight,
-                        'HTTP_MODAUTH' => $modAuth,
-                        'f' => $thumbnailType,
-                        'q' => $thumbnailQuality,
-                        'wctx' => $this->ctx->get('key'),
-                        'source' => $this->get('id'),
-                    ));
-                    $fileArray['thumb'] = $this->ctx->getOption('connectors_url', MODX_CONNECTORS_URL).'system/phpthumb.php?'.urldecode($thumbQuery);
-                    $fileArray['image'] = $this->ctx->getOption('connectors_url', MODX_CONNECTORS_URL).'system/phpthumb.php?'.urldecode($imageQuery);
-
+                    $fileArray['thumb'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality);
+                    $fileArray['image'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality);
                 } else {
                     $fileArray['thumb'] = $this->ctx->getOption('manager_url', MODX_MANAGER_URL).'templates/default/images/restyle/nopreview.jpg';
                     $fileArray['thumbWidth'] = $this->ctx->getOption('filemanager_thumb_width', 80);
@@ -1151,6 +1129,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      * @return boolean True if a binary file.
      */
     public function isBinary($file, $isContent = false) {
+        $file = str_replace(' ','%20', $file);
         if(!$isContent) {
             $file = file_get_contents($file, null, null, null, 512);
         }

@@ -13,6 +13,12 @@
  * @subpackage sources
  */
 require_once MODX_CORE_PATH . 'model/modx/sources/modmediasource.class.php';
+ob_start();
+if (!include_once(dirname(__FILE__).'/s3extended.functions.php')) {
+    ob_end_flush();
+    die('failed to include_once("'.realpath(dirname(__FILE__).'/s3extended.functions.php').'")');
+}
+ob_end_clean();
 /**
  * Implements an Amazon S3-based media source, allowing basic manipulation, uploading and URL-retrieval of resources
  * in a specified S3 bucket.

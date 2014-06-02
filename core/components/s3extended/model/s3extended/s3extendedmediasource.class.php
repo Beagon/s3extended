@@ -636,13 +636,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             }
 
             if ($downSize == "Yes" && in_array($ext, $imageExtensions)) {
-                $assetsPath = MODX_ASSETS_PATH . "components/s3exended/tmp";
+                $assetsPath = MODX_ASSETS_PATH . "components/s3extended/tmp";
                 $filename = $assetsPath . "/" . uniqid() . "." . $ext;
-                $cacheName = $assetsPath . "/rs/" . uniqid() . "." . $ext;
+                $cacheName = $assetsPath . "/" . uniqid() . "." . $ext;
 
-                if (!file_exists($assetsPath . "/rs")) {
+                if (!file_exists($assetsPath)) {
                     $oldmask = umask(0);
-                    mkdir($assetsPath . "/rs", 0777, true);
+                    mkdir($assetsPath, 0777, true);
                     umask($oldmask);
                 }
 

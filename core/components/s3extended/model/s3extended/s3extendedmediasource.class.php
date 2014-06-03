@@ -31,6 +31,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
     public $driver;
     /** @var string $bucket */
     public $bucket;
+    /** @var class $functions */
+    public $functions;
 
     /**
      * Override the constructor to always force S3 sources to not be streams.
@@ -68,7 +70,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
 
         $this->getDriver();
         $this->setBucket($this->xpdo->getOption('bucket',$properties,''));
-
+        $this->functions = new s3extended_functions($this);
         return true;
     }
 
@@ -384,8 +386,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
                     if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
 
-                    $fileArray['thumb'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality);
-                    $fileArray['image'] = s3extended_functions::generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality);
+                    $fileArray['thumb'] = $this->functions->generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality)[0];
+                    $fileArray['image'] = $this->functions->generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality)[1];
                 } else {
                     $fileArray['thumb'] = $this->ctx->getOption('manager_url', MODX_MANAGER_URL).'templates/default/images/restyle/nopreview.jpg';
                     $fileArray['thumbWidth'] = $this->ctx->getOption('filemanager_thumb_width', 80);

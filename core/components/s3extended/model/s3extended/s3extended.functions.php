@@ -60,8 +60,17 @@ class s3extended_functions {
             return 0;
         }
         
-        // Get new sizes
         list($width, $height) = getimagesize($tempFile);
+        
+        if ($width > $height) {
+            $onePercent = $width / 100;
+            $downSizePercentage = floatval(($imageWidth / $onePercent)) / 100;
+            $imageHeight = $height * $downSizePercentage;
+        } else {
+            $onePercent = $width / 100;
+            $downSizePercentage = floatval(($imageHeight / $onePercent)) / 100;
+            $imageWidth = $width * $downSizePercentage;
+        }
             // Load
             $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
             $thumb2 = imagecreatetruecolor($imageWidth, $imageHeight);

@@ -21,3 +21,6 @@ $_lang['s3extended.downSizeHeight_desc'] = 'The height that will be used for the
 $_lang['s3extended.downSizeQuality_desc'] = 'The quality percentage of the downsized image, in a scale from 0-100 when downSize is set on Yes.';
 $_lang['s3extended.sanitizeFiles_desc'] = 'A yes or no check. If yes your file name will be sanitized on upload. eg. "My Vacation Photo 1.PNG" will be called "my-vacation-photo-1.png"';
 $_lang['s3extended.keepRatio_desc'] = 'A yes or no check. If yes the aspect ratio of your image will be preserved and the image is scaled on width.';
+$_lang['s3extended.cacheToS3_desc'] = 'To be implemented.';
+$_lang['s3extended.s3CacheFolder_desc'] = 'To be implemented.';
+$_lang['s3extended.hideS3Cache_desc'] = 'To be implemented.';

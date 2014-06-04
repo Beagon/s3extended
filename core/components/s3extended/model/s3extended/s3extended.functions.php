@@ -104,7 +104,7 @@ class s3extended_functions {
                     imagepng($thumb2, $cacheName2, $thumbnailQuality);
                     break;
                 default:
-                    //$this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
+                    $this->s3->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->s3->getTypeName() . "] " . $this->s3->xpdo->lexicon('s3extended.notImplemented') . " File: " . $pathinfo['basename']);
                     break;
             }
         unlink($tempFile);

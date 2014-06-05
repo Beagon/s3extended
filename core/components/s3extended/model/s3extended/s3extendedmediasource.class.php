@@ -349,7 +349,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             $objectUrl = $bucketUrl.trim($object,'/');
             $baseName = basename($object);
             $isDir = substr(strrev($object),0,1) == '/' ? true : false;
-            $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . var_dump($skipFiles));
             if (in_array($object,$skipFiles)){
             continue;
             }
@@ -1178,12 +1177,11 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      */
     public function getObjectContents($objectPath) {
         $properties = $this->getPropertyList();
-        $objectUrl = $properties['url'].$objectPath;
+        $objectUrl = str_replace(' ','%20', $properties['url'].$objectPath);
         $contents = @file_get_contents($objectUrl);
         $imageExtensions = $this->getOption('imageExtensions',$this->properties,'jpg,jpeg,png,gif');
         $imageExtensions = explode(',',$imageExtensions);
         $fileExtension = pathinfo($objectPath,PATHINFO_EXTENSION);
-
         return array(
             'name' => $objectPath,
             'basename' => basename($objectPath),

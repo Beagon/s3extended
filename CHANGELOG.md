@@ -11,6 +11,7 @@ Main:
 - Added hideS3Cache property. (Default: "Yes")
 - Added custom caching for the file browser.
 - Images with spaces in their name should now be properly displayed in the file browser.
+- Fixed downloading files with spaces in their names.
 
 Lexicon:
 - Added English translation for keepRatio description.

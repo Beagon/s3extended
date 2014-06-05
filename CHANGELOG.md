@@ -1,5 +1,12 @@
 Amazon S3 Extended Über Edition
 ==========
+V0.0.4:
+==========
+Main:
+
+Lexicon:
+
+
 v0.0.3:
 ==========
 Main:

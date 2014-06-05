@@ -158,6 +158,8 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
         $properties = $this->getPropertyList();
         $list = $this->getS3ObjectList($path);
         $editAction = $this->getEditActionId();
+        $hideCache = $this->getOption('hideS3Cache', $this->properties, 'Yes');
+        $cacheFolder = $this->getOption('s3CacheFolder',$this->properties,'_cache') . "/";
 
         $useMultiByte = $this->ctx->getOption('use_multibyte', false);
         $encoding = $this->ctx->getOption('modx_charset', 'UTF-8');
@@ -166,6 +168,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
         $files = array();
         foreach ($list as $idx => $currentPath) {
             if ($currentPath == $path) continue;
+            if ($hideCache == "Yes" && $currentPath == $cacheFolder) continue;
             $fileName = basename($currentPath);
             $isDir = substr(strrev($currentPath),0,1) === '/';
 
@@ -346,7 +349,9 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             $objectUrl = $bucketUrl.trim($object,'/');
             $baseName = basename($object);
             $isDir = substr(strrev($object),0,1) == '/' ? true : false;
-            if (in_array($object,$skipFiles)) continue;
+            if (in_array($object,$skipFiles)){
+            continue;
+            }
 
             if (!$isDir) {
                 $fileArray = array(
@@ -437,7 +442,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      * @return boolean
      */
     public function removeContainer($path) {
-        if (!$this->driver->if_object_exists($this->bucket,$path)) {
+        if (!$this->driver->if_object_exists($this->bucket, $path)) {
             $this->addError('file',$this->xpdo->lexicon('file_folder_err_ns').': '.$path);
             return false;
         }
@@ -708,7 +713,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      * @param string $ext
      * @return string
      */
-    protected function getContentType($ext) {
+    public function getContentType($ext) {
         $contentType = 'application/octet-stream';
         $mimeTypes = array(
             '323' => 'text/h323',
@@ -1005,6 +1010,14 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'value' => 'jpg,jpeg,png,gif',
                 'lexicon' => 's3extended:properties',
             ),
+            'thumbnailQuality' => array(
+                'name' => 'thumbnailQuality',
+                'desc' => 's3extended.thumbnailQuality_desc',
+                'type' => 'textfield',
+                'options' => '',
+                'value' => 90,
+                'lexicon' => 's3extended:properties',
+            ),
             'thumbnailType' => array(
                 'name' => 'thumbnailType',
                 'desc' => 's3extended.thumbnailType_desc',
@@ -1015,14 +1028,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     array('name' => 'GIF','value' => 'gif'),
                 ),
                 'value' => 'png',
-                'lexicon' => 's3extended:properties',
-            ),
-            'thumbnailQuality' => array(
-                'name' => 'thumbnailQuality',
-                'desc' => 's3extended.thumbnailQuality_desc',
-                'type' => 'textfield',
-                'options' => '',
-                'value' => 90,
                 'lexicon' => 's3extended:properties',
             ),
             'skipFiles' => array(
@@ -1037,7 +1042,31 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'sanitizeFiles',
                 'desc' => 's3extended.sanitizeFiles_desc',
                 'type' => 'yesno',
-                'options' => '',
+                'options' => array(
+                    array('name' => 'Yes', 'value' => 'Yes'),
+                    array('name' => 'No', 'value' => 'No'),
+                    ),
+                'value' => 'Yes',
+                'lexicon' => 's3extended:properties',
+            ),
+            'cacheToS3' => array(
+                'name' => 'cacheToS3',
+                'desc' => 's3extended.cacheToS3_desc',
+                'type' => 'yesno',
+                'value' => 'Yes',
+                'lexicon' => 's3extended:properties',
+            ),
+            's3CacheFolder' => array(
+                'name' => 's3CacheFolder',
+                'desc' => 's3extended.s3CacheFolder_desc',
+                'type' => 'textfield',
+                'value' => '_cache',
+                'lexicon' => 's3extended:properties',
+            ),
+            'hideS3Cache' => array(
+                'name' => 'hideS3Cache',
+                'desc' => 's3extended.hideS3Cache_desc',
+                'type' => 'yesno',
                 'value' => 'Yes',
                 'lexicon' => 's3extended:properties',
             ),
@@ -1148,12 +1177,11 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
      */
     public function getObjectContents($objectPath) {
         $properties = $this->getPropertyList();
-        $objectUrl = $properties['url'].$objectPath;
+        $objectUrl = str_replace(' ','%20', $properties['url'].$objectPath);
         $contents = @file_get_contents($objectUrl);
         $imageExtensions = $this->getOption('imageExtensions',$this->properties,'jpg,jpeg,png,gif');
         $imageExtensions = explode(',',$imageExtensions);
         $fileExtension = pathinfo($objectPath,PATHINFO_EXTENSION);
-
         return array(
             'name' => $objectPath,
             'basename' => basename($objectPath),

@@ -15,6 +15,7 @@ class s3extended_functions {
     public function __construct($s3) {
        $this->s3 = $s3;
     }
+
     public function generateFileManagerThumbs($url) {
         $imageWidth = $this->s3->ctx->getOption('filemanager_image_width', 400);
         $imageHeight = $this->s3->ctx->getOption('filemanager_image_height', 300);
@@ -24,9 +25,9 @@ class s3extended_functions {
         $assetsPath = MODX_ASSETS_PATH . "components/s3extended";
         $pathinfo = pathinfo($url);
         $ext = strtolower($pathinfo['extension']);
-        $file = $pathinfo['basename'];
-        $tempFile = $assetsPath . "/tmp/" . $file;
+        $tempFile = $assetsPath . "/tmp/" . uniqid();
         $cacheUrls = array();
+
         //Thumbnail
         $cacheFileName = md5($url) . $thumbWidth . "x" . $thumbHeight . "." . $ext;
         $cacheName = $assetsPath . "/cache/" . $cacheFileName;
@@ -60,8 +61,17 @@ class s3extended_functions {
             return 0;
         }
         
-        // Get new sizes
         list($width, $height) = getimagesize($tempFile);
+        
+        if ($width > $height) {
+            $onePercent = $width / 100;
+            $downSizePercentage = floatval(($imageWidth / $onePercent)) / 100;
+            $imageHeight = $height * $downSizePercentage;
+        } else {
+            $onePercent = $width / 100;
+            $downSizePercentage = floatval(($imageHeight / $onePercent)) / 100;
+            $imageWidth = $width * $downSizePercentage;
+        }
             // Load
             $thumb = imagecreatetruecolor($thumbWidth, $thumbHeight);
             $thumb2 = imagecreatetruecolor($imageWidth, $imageHeight);
@@ -95,10 +105,39 @@ class s3extended_functions {
                     imagepng($thumb2, $cacheName2, $thumbnailQuality);
                     break;
                 default:
-                    //$this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
+                    $this->s3->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->s3->getTypeName() . "] " . $this->s3->xpdo->lexicon('s3extended.notImplemented') . " File: " . $pathinfo['basename']);
                     break;
             }
         unlink($tempFile);
+        if ($this->s3->getOption('cacheToS3', $this->s3->properties,'Yes') == "Yes") {
+            $this->uploadFile("", $this->s3->getOption('s3CacheFolder', $this->s3->properties, '_cache'), $cacheFileName, $cacheName);
+            $this->uploadFile("", $this->s3->getOption('s3CacheFolder', $this->s3->properties, '_cache'), $cacheFileName2, $cacheName2);
+        }
         return $cacheUrls;
+    }
+
+    public function uploadFile($parentContainer, $container, $fileName, $file) {
+        $newPath = $parentContainer.rtrim($container,'/').'/';
+        if (!$this->s3->driver->if_object_exists($this->s3->bucket, $newPath)) {
+            $this->s3->createContainer($container, $parentContainer);
+        }
+        $newPath = $parentContainer.rtrim($container,'/').'/' . $fileName;
+        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+        $size = @filesize($file);
+        $uploaded = $this->s3->driver->create_object(
+            $this->s3->bucket,
+            $newPath,
+            array(
+            'fileUpload' => $file,
+            'acl' => AmazonS3::ACL_PUBLIC,
+            'length' => $size,
+            'contentType' => $this->s3->getContentType($extension),
+        ));
+
+        if (!$uploaded) {
+            return false;
+        }
+
+        return true;
     }
 }

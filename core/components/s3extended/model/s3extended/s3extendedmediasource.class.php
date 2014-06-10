@@ -635,43 +635,47 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 
                 // Get new sizes
                 list($width, $height) = getimagesize($filename);
-                if($width >= $downSizeWidth) {
-                    if ($keepRatio == "Yes") {
+
+                if ($keepRatio == "Yes") {
+                    if ($width >= $height) {
                         $onePercent = $width / 100;
                         $downSizePercentage = floatval(($downSizeWidth / $onePercent)) / 100;
                         $downSizeHeight = $height * $downSizePercentage;
+                    } else {
+                        $onePercent = $height / 100;
+                        $downSizePercentage = floatval(($downSizeHeight / $onePercent)) / 100;
+                        $downSizeWidth = $width * $downSizePercentage;
                     }
-
-                    // Load
-                    $thumb = imagecreatetruecolor($downSizeWidth, $downSizeHeight);
-                    switch ($ext) {
-                        case "gif":
-                            $source = imagecreatefromgif($filename);
-                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                            imagegif($thumb, $cacheName, $downSizeQuality);
-                            break;
-                        case "jpeg":
-                            $source = imagecreatefromjpeg($filename);
-                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                            imagejpeg($thumb, $cacheName, $downSizeQuality);
-                            break;
-                        case "jpg":
-                            $source = imagecreatefromjpeg($filename);
-                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                            imagejpeg($thumb, $cacheName, $downSizeQuality);
-                            break;
-                        case "png":
-                            $source = imagecreatefrompng($filename);
-                            imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
-                            imagepng($thumb, $cacheName, $downSizeQuality);
-                            break;
-                        default:
-                            $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
-                            break;
-                    }
-                    $file['tmp_name'] = $cacheName;
-                    $size = @filesize($file['tmp_name']);
                 }
+                // Load
+                $thumb = imagecreatetruecolor($downSizeWidth, $downSizeHeight);
+                switch ($ext) {
+                    case "gif":
+                        $source = imagecreatefromgif($filename);
+                        imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagegif($thumb, $cacheName, $downSizeQuality);
+                        break;
+                    case "jpeg":
+                        $source = imagecreatefromjpeg($filename);
+                        imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagejpeg($thumb, $cacheName, $downSizeQuality);
+                        break;
+                    case "jpg":
+                        $source = imagecreatefromjpeg($filename);
+                        imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagejpeg($thumb, $cacheName, $downSizeQuality);
+                        break;
+                    case "png":
+                        $source = imagecreatefrompng($filename);
+                        imagecopyresampled($thumb, $source, 0, 0, 0, 0, $downSizeWidth, $downSizeHeight, $width, $height);
+                        imagepng($thumb, $cacheName, $downSizeQuality);
+                        break;
+                    default:
+                        $this->xpdo->log(modX::LOG_LEVEL_ERROR, "[" . $this->getTypeName() . "] " . $this->xpdo->lexicon('s3extended.notImplemented') . " File: " . $file['name']);
+                        break;
+                }
+                $file['tmp_name'] = $cacheName;
+                $size = @filesize($file['tmp_name']);
             }
 
             $contentType = $this->getContentType($ext);
@@ -957,7 +961,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
         $success = $response->isOK();
 
         if ($success) {
-            $deleteResponse = $this->driver->delete_object($this->bucket,$from);
+            $deleteResponse = $this->driver->delete_object($this->bucket, $from);
             $success = $deleteResponse->isOK();
         } else {
             $this->xpdo->error->message = $this->xpdo->lexicon('file_folder_err_rename').': '.$to.' -> '.$from;

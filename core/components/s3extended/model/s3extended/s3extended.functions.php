@@ -131,6 +131,7 @@ class s3extended_functions {
                     break;
             }
         unlink($tempFile);
+
         if ($cacheToS3 == "Yes") {
             if($this->uploadFile("", $s3CacheFolder, $cacheFileName, $cacheName)) {
                 $cacheUrl = $s3CacheFolderURL . $cacheFileName;
@@ -141,6 +142,7 @@ class s3extended_functions {
                 unlink($cacheName2);
             }
         }
+
         array_push($cacheUrls, $cacheUrl);
         array_push($cacheUrls, $cacheUrl2);
         return $cacheUrls;

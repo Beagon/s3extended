@@ -24,3 +24,4 @@ $_lang['s3extended.keepRatio_desc'] = 'A yes or no check. If yes the aspect rati
 $_lang['s3extended.cacheToS3_desc'] = 'A yes or no check. If yes S3 will be used for your cache.';
 $_lang['s3extended.s3CacheFolder_desc'] = 'If cacheToS3 is Yes this directory will be made and used for cache on S3.';
 $_lang['s3extended.hideS3Cache_desc'] = 'Hide the cache folder in your file browser. IMPORTANT: If you turn this off it would be possible that the filebrowser will cache everything in the caching folder. This will create a lot of serverload.';
+$_lang['s3extended.debugMode_desc'] = 'If this is turned on your webserver error log will be filled with debug information. (Not recommended!)';

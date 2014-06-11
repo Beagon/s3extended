@@ -1091,6 +1091,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'value' => 90,
                 'lexicon' => 's3extended:properties',
             ),
+            'debugMode' => array(
+                'name' => 'debugMode',
+                'desc' => 's3extended.debugMode_desc',
+                'type' => 'yesno',
+                'value' => 'No',
+                'lexicon' => 's3extended:properties',
+            ),
         );
     }
 

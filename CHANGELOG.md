@@ -3,9 +3,15 @@ Amazon S3 Extended Über Edition
 V0.0.4:
 ==========
 Main:
+- Added plugin that will cache all images on S3 on the first file upload.
+  This will take some time, once the file has been uploaded it's done caching.
+- Removed default image type. Image type will the same as the source file.
+- Added debugMode property. (Default: "No")
+- Added code function that will help the plugin.
 
 Lexicon:
-
+- Added English translation for debugMode description.
+- Added English translation for code.
 
 v0.0.3:
 ==========

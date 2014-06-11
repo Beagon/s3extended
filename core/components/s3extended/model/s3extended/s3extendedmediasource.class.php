@@ -91,6 +91,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
     }
 
     /**
+     * Get the code of this source type
+     * @return string
+     */
+    public function getCodeName() {
+        return $this->xpdo->lexicon('s3extended.code');
+    }
+    /**
      * Gets the AmazonS3 class instance
      * @return AmazonS3
      */
@@ -170,6 +177,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             if ($currentPath == $path) continue;
             if ($hideCache == "Yes" && $currentPath == $cacheFolder) continue;
             $fileName = basename($currentPath);
+            if($fileName == ".cached") continue;
             $isDir = substr(strrev($currentPath),0,1) === '/';
 
             $extension = pathinfo($fileName,PATHINFO_EXTENSION);
@@ -390,9 +398,9 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     /* ensure max h/w */
                     if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
                     if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
-
-                    $fileArray['thumb'] = $this->functions->generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality)[0];
-                    $fileArray['image'] = $this->functions->generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality)[1];
+                    $images = $this->functions->generateFileManagerThumbs($objectUrl);
+                    $fileArray['thumb'] = $images[0];
+                    $fileArray['image'] = $images[1];
                 } else {
                     $fileArray['thumb'] = $this->ctx->getOption('manager_url', MODX_MANAGER_URL).'templates/default/images/restyle/nopreview.jpg';
                     $fileArray['thumbWidth'] = $this->ctx->getOption('filemanager_thumb_width', 80);
@@ -1018,27 +1026,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'thumbnailQuality',
                 'desc' => 's3extended.thumbnailQuality_desc',
                 'type' => 'textfield',
-                'options' => '',
                 'value' => 90,
-                'lexicon' => 's3extended:properties',
-            ),
-            'thumbnailType' => array(
-                'name' => 'thumbnailType',
-                'desc' => 's3extended.thumbnailType_desc',
-                'type' => 'list',
-                'options' => array(
-                    array('name' => 'PNG','value' => 'png'),
-                    array('name' => 'JPG','value' => 'jpg'),
-                    array('name' => 'GIF','value' => 'gif'),
-                ),
-                'value' => 'png',
                 'lexicon' => 's3extended:properties',
             ),
             'skipFiles' => array(
                 'name' => 'skipFiles',
                 'desc' => 's3extended.skipFiles_desc',
                 'type' => 'textfield',
-                'options' => '',
                 'value' => '.svn,.git,_notes,nbproject,.idea,.DS_Store',
                 'lexicon' => 's3extended:properties',
             ),
@@ -1046,10 +1040,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'sanitizeFiles',
                 'desc' => 's3extended.sanitizeFiles_desc',
                 'type' => 'yesno',
-                'options' => array(
-                    array('name' => 'Yes', 'value' => 'Yes'),
-                    array('name' => 'No', 'value' => 'No'),
-                    ),
                 'value' => 'Yes',
                 'lexicon' => 's3extended:properties',
             ),
@@ -1078,7 +1068,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'downSize',
                 'desc' => 's3extended.downSize_desc',
                 'type' => 'yesno',
-                'options' => '',
                 'value' => 'No',
                 'lexicon' => 's3extended:properties',
             ),
@@ -1086,7 +1075,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'keepRatio',
                 'desc' => 's3extended.keepRatio_desc',
                 'type' => 'yesno',
-                'options' => '',
                 'value' => 'Yes',
                 'lexicon' => 's3extended:properties',
             ),
@@ -1094,7 +1082,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'downSizeWidth',
                 'desc' => 's3extended.downSizeWidth_desc',
                 'type' => 'textfield',
-                'options' => '',
                 'value' => 300,
                 'lexicon' => 's3extended:properties',
             ),
@@ -1102,7 +1089,6 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'downSizeHeight',
                 'desc' => 's3extended.downSizeHeight_desc',
                 'type' => 'textfield',
-                'options' => '',
                 'value' => 300,
                 'lexicon' => 's3extended:properties',
             ),
@@ -1110,8 +1096,14 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                 'name' => 'downSizeQuality',
                 'desc' => 's3extended.downSizeQuality_desc',
                 'type' => 'textfield',
-                'options' => '',
                 'value' => 90,
+                'lexicon' => 's3extended:properties',
+            ),
+            'debugMode' => array(
+                'name' => 'debugMode',
+                'desc' => 's3extended.debugMode_desc',
+                'type' => 'yesno',
+                'value' => 'No',
                 'lexicon' => 's3extended:properties',
             ),
         );

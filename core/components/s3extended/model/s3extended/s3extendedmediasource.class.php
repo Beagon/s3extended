@@ -91,6 +91,13 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
     }
 
     /**
+     * Get the code of this source type
+     * @return string
+     */
+    public function getCodeName() {
+        return $this->xpdo->lexicon('s3extended.code');
+    }
+    /**
      * Gets the AmazonS3 class instance
      * @return AmazonS3
      */
@@ -170,6 +177,7 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
             if ($currentPath == $path) continue;
             if ($hideCache == "Yes" && $currentPath == $cacheFolder) continue;
             $fileName = basename($currentPath);
+            if($fileName == ".cached") continue;
             $isDir = substr(strrev($currentPath),0,1) === '/';
 
             $extension = pathinfo($fileName,PATHINFO_EXTENSION);
@@ -390,9 +398,9 @@ class S3ExtendedMediaSource extends modMediaSource implements modMediaSourceInte
                     /* ensure max h/w */
                     if ($thumbWidth > $imageWidth) $thumbWidth = $imageWidth;
                     if ($thumbHeight > $imageHeight) $thumbHeight = $imageHeight;
-
-                    $fileArray['thumb'] = $this->functions->generateFileManagerThumbs($objectUrl, $thumbWidth, $thumbHeight, $thumbnailQuality)[0];
-                    $fileArray['image'] = $this->functions->generateFileManagerThumbs($objectUrl, $imageWidth, $imageHeight, $thumbnailQuality)[1];
+                    $images = $this->functions->generateFileManagerThumbs($objectUrl);
+                    $fileArray['thumb'] = $images[0];
+                    $fileArray['image'] = $images[1];
                 } else {
                     $fileArray['thumb'] = $this->ctx->getOption('manager_url', MODX_MANAGER_URL).'templates/default/images/restyle/nopreview.jpg';
                     $fileArray['thumbWidth'] = $this->ctx->getOption('filemanager_thumb_width', 80);
